@@ -1,4 +1,4 @@
-;;; benchmark.el --- Benchmarks Emacs require and load calls
+;;; benchmark-init.el --- Benchmarks Emacs require and load calls
 
 ;; Copyright (C) 2013  David Holm
 
@@ -31,7 +31,7 @@
 ;; Place this program in your load path and add the following code to the
 ;; beginning of your Emacs initialization script.
 
-;; (require 'benchmark)
+;; (require 'benchmark-init)
 ;; (benchmark/install)
 
 ;;; Usage:
@@ -126,5 +126,5 @@ LOAD-DURATION is the time taken in milliseconds to load FILE.")
                    benchmark/load-times))))))
 
 
-(provide 'benchmark)
-;;; benchmark.el ends here
+(provide 'benchmark-init)
+;;; benchmark-init.el ends here

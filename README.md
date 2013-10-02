@@ -1,5 +1,5 @@
-benchmark-el
-============
+benchmark-init
+==============
 
 This is a simple benchmark of calls to Emacs require and load functions.
 It can be used to keep track of where time is being spent during Emacs
@@ -16,7 +16,7 @@ Place this program in your load path and add the following code to the
 beginning of your Emacs initialization script.
 
 ```lisp
-(require 'benchmark)
+(require 'benchmark-init)
 (benchmark/install)
 ```
 
