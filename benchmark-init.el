@@ -32,15 +32,15 @@
 ;; beginning of your Emacs initialization script.
 
 ;; (require 'benchmark-init)
-;; (benchmark/install)
+;; (benchmark-init/install)
 
 ;;; Usage:
 
 ;; After Emacs has finished loading the following two functions can be called
 ;; in order to display the results.
 ;;
-;;  - benchmark/show-require-times
-;;  - benchmark/show-load-times
+;;  - benchmark-init/show-require-times
+;;  - benchmark-init/show-load-times
 ;;
 ;; ctable (https://github.com/kiwanami/emacs-ctable) is used to display the
 ;; results and must be in your Emacs load path for the functions to work.
@@ -48,34 +48,34 @@
 ;;; Code:
 
 
-(defun benchmark/time-subtract-millis (b a)
+(defun benchmark-init/time-subtract-millis (b a)
   "Calculate the number of milliseconds that have elapsed between B and A."
   (* 1000.0 (float-time (time-subtract b a))))
 
 
-(defvar benchmark/require-times (make-hash-table :test 'equal)
+(defvar benchmark-init/require-times (make-hash-table :test 'equal)
   "A hash table of (FEATURE . LOAD-DURATION).
 LOAD-DURATION is the time taken in milliseconds to load FEATURE.")
 
 
-(defvar benchmark/load-times (make-hash-table :test 'equal)
+(defvar benchmark-init/load-times (make-hash-table :test 'equal)
   "A hash-table of (FILE . LOAD-DURATION).
 LOAD-DURATION is the time taken in milliseconds to load FILE.")
 
 
-(defun benchmark/show-require-times ()
+(defun benchmark-init/show-require-times ()
   "Show the benchmark for require."
   (interactive)
-  (benchmark/show-times benchmark/require-times "Feature"))
+  (benchmark-init/show-times benchmark-init/require-times "Feature"))
 
 
-(defun benchmark/show-load-times ()
+(defun benchmark-init/show-load-times ()
   "Show the benchmark for load."
   (interactive)
-  (benchmark/show-times benchmark/load-times "File"))
+  (benchmark-init/show-times benchmark-init/load-times "File"))
 
 
-(defun benchmark/show-times (hash-table name)
+(defun benchmark-init/show-times (hash-table name)
   "Show the benchmark for the specified HASH-TABLE with primary column NAME."
   (let* ((column-model
           (list (make-ctbl:cmodel
@@ -86,7 +86,8 @@ LOAD-DURATION is the time taken in milliseconds to load FILE.")
                  :sorter (lambda (a b) (ctbl:sort-number-lessp b a)))))
          (data (let ((entries ()))
                  (maphash (lambda (key value)
-                            (add-to-list 'entries (list key (round value)))) hash-table)
+                            (add-to-list 'entries (list key (round value))))
+                          hash-table)
                  entries))
          (model
           (make-ctbl:model
@@ -98,32 +99,32 @@ LOAD-DURATION is the time taken in milliseconds to load FILE.")
 
 
 ;;;###autoload
-(defun benchmark/install ()
+(defun benchmark-init/install ()
   "Install benchmark support in Emacs."
   (defadvice require
     (around build-require-times (feature &optional filename noerror) activate)
-    "Note in `benchmark/require-times' the time taken to require each feature."
+    "Note in `benchmark-init/require-times' the time taken to require each feature."
     (let* ((already-loaded (memq feature features))
            (require-start-time (and (not already-loaded) (current-time))))
       (prog1
           ad-do-it
         (when (and (not already-loaded) (memq feature features))
-          (puthash feature (benchmark/time-subtract-millis (current-time)
-                                                           require-start-time)
-                   benchmark/require-times)))))
+          (puthash feature (benchmark-init/time-subtract-millis (current-time)
+                                                                require-start-time)
+                   benchmark-init/require-times)))))
 
   (defadvice load
     (around build-load-times (file &optional noerror nomessage nosuffix must-suffix) activate)
-    "Note in `benchmark/load-times' the time taken to load each file."
+    "Note in `benchmark-init/load-times' the time taken to load each file."
     (let* ((load-start-time (current-time)))
       (prog1
           ad-do-it
         (progn
-          (unless (eq (gethash file benchmark/load-times) nil)
+          (unless (eq (gethash file benchmark-init/load-times) nil)
             (message (format "Loading %s which has already been loaded!" file)))
-          (puthash file (benchmark/time-subtract-millis (current-time)
+          (puthash file (benchmark-init/time-subtract-millis (current-time)
                                                         load-start-time)
-                   benchmark/load-times))))))
+                   benchmark-init/load-times))))))
 
 
 (provide 'benchmark-init)

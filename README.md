@@ -15,7 +15,7 @@ beginning of your Emacs initialization script.
 
 ```lisp
 (require 'benchmark-init)
-(benchmark/install)
+(benchmark-init/install)
 ```
 
 
@@ -41,7 +41,7 @@ calling *el-get*.
   (when (file-exists-p benchmark-init-path)
     (add-to-list 'load-path benchmark-init-path)
     (require 'benchmark-init)
-    (benchmark/install)))
+    (benchmark-init/install)))
 ```
 
 The first time you start Emacs after adding this nothing will be benchmarked
@@ -54,12 +54,24 @@ everything should be benchmarked from now on.
 After Emacs has finished loading the following two functions can be called
 in order to display the results.
 
- - benchmark/show-require-times
- - benchmark/show-load-times
+ - benchmark-init/show-require-times
+ - benchmark-init/show-load-times
 
 [ctable][2] is used to display the results and must be in your Emacs load path
 for the functions to work.
 
+This is what it might look like when executing *benchmark-init/show-require-times*.
+
+```
+|           Feature           |  ms   |
++-----------------------------+-------+
+|eldoc-eval                   |    204|
+|eldoc                        |    183|
+|ido                          |     59|
+|ispell                       |     16|
+|grep                         |      6|
+|inversion                    |      1|
+```
 
 [1]: https://github.com/purcell/emacs.d/blob/master/init-benchmarking.el
 [2]: https://github.com/kiwanami/emacs-ctable
