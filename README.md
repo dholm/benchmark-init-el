@@ -73,5 +73,5 @@ This is what it might look like when executing *benchmark-init/show-require-time
 |inversion                    |      1|
 ```
 
-[1]: https://github.com/purcell/emacs.d/blob/master/init-benchmarking.el
+[1]: https://github.com/purcell/emacs.d/blob/master/lisp/init-benchmarking.el
 [2]: https://github.com/kiwanami/emacs-ctable
