@@ -107,33 +107,46 @@ LOAD-DURATION is the time taken in milliseconds to load FEATURE.")
     (puthash entry (list (symbol-name type) duration)
              benchmark-init/durations)))
 
-;;;###autoload
-(defun benchmark-init/install ()
-  "Install benchmark support in Emacs."
-  (defadvice require (around build-require-durations
-                             (feature &optional filename noerror) activate)
-    "Note in `benchmark-init/durations' the time taken to require each feature."
-    (let ((entry (symbol-name feature))
-          (already-loaded (memq feature features))
-          (require-start-time (current-time)))
-      (prog1
-          ad-do-it
-        (when (and (not already-loaded)
-                   (memq feature features))
-          (benchmark-init/collect-entry require-start-time entry 'require)))))
+(defadvice require
+  (around build-require-durations (feature &optional filename noerror) activate)
+  "Note in `benchmark-init/durations' the time taken to require each feature."
+  (let ((entry (symbol-name feature))
+        (already-loaded (memq feature features))
+        (require-start-time (current-time)))
+    (prog1
+        ad-do-it
+      (when (and (not already-loaded)
+                 (memq feature features))
+        (benchmark-init/collect-entry require-start-time entry 'require)))))
 
-  (defadvice load
-    (around build-load-durations (file &optional noerror nomessage nosuffix
-                                       must-suffix) activate)
-    "Note in `benchmark-init/durations' the time taken to load each file."
-    (let ((entry (abbreviate-file-name file))
-          (load-start-time (current-time)))
-      (prog1
-          ad-do-it
-        (if (eq (gethash entry benchmark-init/durations) nil)
-            (benchmark-init/collect-entry load-start-time entry 'load)
-          (message
-           (format "Loaded %s which had already been loaded!" file)))))))
+(defadvice load
+  (around build-load-durations (file &optional noerror nomessage nosuffix
+                                     must-suffix) activate)
+  "Note in `benchmark-init/durations' the time taken to load each file."
+  (let ((entry (abbreviate-file-name file))
+        (load-start-time (current-time)))
+    (prog1
+        ad-do-it
+      (if (eq (gethash entry benchmark-init/durations) nil)
+          (benchmark-init/collect-entry load-start-time entry 'load)
+        (message
+         (format "Loaded %s which had already been loaded!" file))))))
+
+(defun benchmark-init/deactivate ()
+  "Deactivate benchmark-init."
+  (interactive)
+  (ad-deactivate 'require)
+  (ad-deactivate 'load))
+
+;;;###autoload
+(defun benchmark-init/activate ()
+  "Activate benchmark-init and start collecting data."
+  (interactive)
+  (ad-activate 'require)
+  (ad-activate 'load))
+
+(define-obsolete-function-alias 'benchmark-init/install
+  'benchmark-init/activate)
 
 (provide 'benchmark-init)
 ;;; benchmark-init.el ends here
