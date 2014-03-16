@@ -33,18 +33,23 @@
 ;;; Installation:
 
 ;; Place this file in your load path and add the following code to the
-;; beginning of your Emacs initialization script.
+;; beginning of your Emacs initialization script:
 
 ;; (require 'benchmark-init)
-;; (benchmark-init/install)
+
+;; Data collection will begin as soon as benchmark-init is loaded.
 
 ;;; Usage:
 
-;; After Emacs has finished loading the following two functions can be called
-;; in order to display the results.
+;; After Emacs has finished loading the following function will bring up
+;; the results:
 ;;
 ;;  - benchmark-init/show-durations
 ;;
+;; Data collection can be controlled using the following two functions:
+;;
+;;  - benchmark-init/activate
+;;  - benchmark-init/deactivate
 
 ;;; Code:
 
