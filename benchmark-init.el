@@ -70,7 +70,8 @@
 LOAD-DURATION is the time taken in milliseconds to load FEATURE.")
 
 (define-derived-mode benchmark-init/list-mode tabulated-list-mode
-  "bencmark-init mode" "Mode for displaying benchmark-init results."
+  "Benchmark Init"
+  "Mode for displaying benchmark-init results."
   (setq tabulated-list-format benchmark-init/list-format)
   (setq tabulated-list-padding 2)
   (setq tabulated-list-sort-key benchmark-init/list-sort-key)
