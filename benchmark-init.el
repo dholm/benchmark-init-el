@@ -50,14 +50,6 @@
 
 (require 'tabulated-list)
 
-(defun benchmark-init/time-subtract-millis (b a)
-  "Calculate the number of milliseconds that have elapsed between B and A."
-  (* 1000.0 (float-time (time-subtract b a))))
-
-(defvar benchmark-init/durations (make-hash-table :test 'equal)
-  "A hash table of (MODULE . LOAD-DURATION).
-LOAD-DURATION is the time taken in milliseconds to load FEATURE.")
-
 (defconst benchmark-init/buffer-name "*Benchmark Init*"
   "Name of benchmark-init list buffer.")
 
@@ -72,6 +64,10 @@ LOAD-DURATION is the time taken in milliseconds to load FEATURE.")
 (defconst benchmark-init/list-sort-key
   '("ms" . t)
   "Benchmark list sort key.")
+
+(defvar benchmark-init/durations (make-hash-table :test 'equal)
+  "A hash table of (MODULE . (LOAD-TYPE LOAD-DURATION)).
+LOAD-DURATION is the time taken in milliseconds to load FEATURE.")
 
 (define-derived-mode benchmark-init/list-mode tabulated-list-mode
   "bencmark-init mode" "Mode for displaying benchmark-init results."
@@ -94,43 +90,50 @@ LOAD-DURATION is the time taken in milliseconds to load FEATURE.")
   (let (entries)
     (maphash
      (lambda (key value)
-       (let ((type (first value))
-             (duration (round (second value))))
+       (let ((type (car value))
+             (duration (round (cadr value))))
          (push (list key `[,key ,type ,(format "%d" duration)]) entries)))
      benchmark-init/durations)
     entries))
 
+(defun benchmark-init/time-subtract-millis (b a)
+  "Calculate the number of milliseconds that have elapsed between B and A."
+  (* 1000.0 (float-time (time-subtract b a))))
+
+(defun benchmark-init/collect-entry (start-time entry type)
+  "Store duration from START-TIME for ENTRY of TYPE into benchmark table."
+  (let ((duration (benchmark-init/time-subtract-millis (current-time)
+                                                       start-time)))
+    (puthash entry (list (symbol-name type) duration)
+             benchmark-init/durations)))
+
 ;;;###autoload
 (defun benchmark-init/install ()
   "Install benchmark support in Emacs."
-  (defadvice require
-    (around build-require-durations (feature &optional filename noerror) activate)
+  (defadvice require (around build-require-durations
+                             (feature &optional filename noerror) activate)
     "Note in `benchmark-init/durations' the time taken to require each feature."
-    (let* ((already-loaded (memq feature features))
-           (require-start-time (and (not already-loaded) (current-time))))
+    (let ((entry (symbol-name feature))
+          (already-loaded (memq feature features))
+          (require-start-time (current-time)))
       (prog1
           ad-do-it
-        (when (and (not already-loaded) (memq feature features))
-          (let ((entry (symbol-name feature))
-                (duration (benchmark-init/time-subtract-millis (current-time)
-                                                               require-start-time)))
-            (puthash entry (list "require" duration)
-                     benchmark-init/durations))))))
+        (when (and (not already-loaded)
+                   (memq feature features))
+          (benchmark-init/collect-entry require-start-time entry 'require)))))
 
   (defadvice load
-    (around build-load-durations (file &optional noerror nomessage nosuffix must-suffix) activate)
+    (around build-load-durations (file &optional noerror nomessage nosuffix
+                                       must-suffix) activate)
     "Note in `benchmark-init/durations' the time taken to load each file."
-    (let* ((load-start-time (current-time)))
+    (let ((entry (abbreviate-file-name file))
+          (load-start-time (current-time)))
       (prog1
           ad-do-it
-        (progn
-          (let ((entry (abbreviate-file-name file))
-                (duration (benchmark-init/time-subtract-millis (current-time)
-                                                               load-start-time)))
-            (unless (eq (gethash entry benchmark-init/durations) nil)
-              (message (format "Loading %s which has already been loaded!" file)))
-            (puthash entry (list "load" duration)
-                     benchmark-init/durations)))))))
+        (if (eq (gethash entry benchmark-init/durations) nil)
+            (benchmark-init/collect-entry load-start-time entry 'load)
+          (message
+           (format "Loaded %s which had already been loaded!" file)))))))
 
 (provide 'benchmark-init)
 ;;; benchmark-init.el ends here
