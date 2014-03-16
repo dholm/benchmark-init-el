@@ -26,7 +26,6 @@ Add the following recipe to el-get.
 ```lisp
 (:name benchmark-init
        :type github
-       :depends (ctable)
        :pkgname "dholm/benchmark-init-el")
 ```
 
@@ -54,24 +53,19 @@ everything should be benchmarked from now on.
 After Emacs has finished loading the following two functions can be called
 in order to display the results.
 
- - benchmark-init/show-require-times
- - benchmark-init/show-load-times
+ - benchmark-init/show-durations
 
-[ctable][2] is used to display the results and must be in your Emacs load path
-for the functions to work.
-
-This is what it might look like when executing *benchmark-init/show-require-times*.
+This is what it might look like when executing *benchmark-init/show-durations*.
 
 ```
-|           Feature           |  ms   |
-+-----------------------------+-------+
-|eldoc-eval                   |    204|
-|eldoc                        |    183|
-|ido                          |     59|
-|ispell                       |     16|
-|grep                         |      6|
-|inversion                    |      1|
+| Module                       |  Type   | ms [^] |
++------------------------------+---------+--------+
+| eldoc-eval                   | require |    204 |
+| eldoc                        | require |    183 |
+| ido                          | require |     59 |
+| ispell                       | require |     16 |
+| grep                         | require |      6 |
+| ~/.emacs.d/benchmark-init.el | load    |      1 |
 ```
 
 [1]: https://github.com/purcell/emacs.d/blob/master/lisp/init-benchmarking.el
-[2]: https://github.com/kiwanami/emacs-ctable
