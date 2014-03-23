@@ -37,38 +37,32 @@
 
 ;; (require 'benchmark-init)
 
-;; Data collection will begin as soon as benchmark-init is loaded.
+;; Data collection will begin as soon as benchmark-init has been loaded.
 
 ;;; Usage:
 
-;; After Emacs has finished loading the following function will bring up
+;; After Emacs has finished loading the following functions will bring up
 ;; the results:
 ;;
-;;  - benchmark-init/show-durations
+;;  - `benchmark-init/show-durations-tabulated'
+;;  - `benchmark-init/show-durations-tree'
 ;;
 ;; Data collection can be controlled using the following two functions:
 ;;
-;;  - benchmark-init/activate
-;;  - benchmark-init/deactivate
+;;  - `benchmark-init/activate'
+;;  - `benchmark-init/deactivate'
 
 ;;; Code:
 
 (require 'cl-lib)
 
-(defconst benchmark-init/buffer-name "*Benchmark Init*"
-  "Name of benchmark-init list buffer.")
+;; Customization
 
-(defconst benchmark-init/list-format
-  [("Module" 65 t)
-   ("Type" 7 t)
-   ("ms" 7 (lambda (a b) (< (string-to-number (aref (cadr a) 2))
-                            (string-to-number (aref (cadr b) 2))))
-    :right-align t)]
-  "Benchmark list format.")
+(defgroup benchmark-init nil
+  "Emacs init benchmarking."
+  :group 'local)
 
-(defconst benchmark-init/list-sort-key
-  '("ms" . t)
-  "Benchmark list sort key.")
+;; Global variables
 
 (cl-defstruct benchmark-init/node
   "Tree node structure.
@@ -90,39 +84,6 @@ Slots:
 (defvar benchmark-init/current-node benchmark-init/durations-tree
   "Current node in durations tree.")
 
-;; Tabulated presentation mode
-
-(define-derived-mode benchmark-init/tabulated-mode tabulated-list-mode
-  "Benchmark Init Tabulated"
-  "Mode for displaying benchmark-init results in a table."
-  (setq tabulated-list-format benchmark-init/list-format)
-  (setq tabulated-list-padding 2)
-  (setq tabulated-list-sort-key benchmark-init/list-sort-key)
-  (tabulated-list-init-header))
-
-(defun benchmark-init/list-entries ()
-  "Generate benchmark-init list entries from HASH-TABLE."
-  (let (entries)
-    (mapc
-     (lambda (value)
-       (let ((name (cdr (assq :name value)))
-             (type (symbol-name (cdr (assq :type value))))
-             (duration (round (cdr (assq :duration value)))))
-         (push (list name `[,name ,type ,(format "%d" duration)]) entries)))
-     (cdr (benchmark-init/flatten benchmark-init/durations-tree)))
-    entries))
-
-(defun benchmark-init/show-durations-tabulated ()
-  "Show the benchmark results in a sorted table."
-  (interactive)
-  (unless (featurep 'tabulated-list)
-    (require 'tabulated-list))
-  (with-current-buffer (get-buffer-create benchmark-init/buffer-name)
-    (benchmark-init/tabulated-mode)
-    (setq tabulated-list-entries 'benchmark-init/list-entries)
-    (tabulated-list-print t)
-    (switch-to-buffer (current-buffer))))
-
 ;; Helpers
 
 (defun benchmark-init/time-subtract-millis (b a)
@@ -141,17 +102,29 @@ Slots:
             (setq node-list
                   (append (benchmark-init/flatten child) node-list))))))
 
-(defun benchmark-init/print-node (node depth)
-  "Print NODE at DEPTH."
-  (let ((padding (make-string (* 2 depth) ? ))
-        (depth (+ depth 1))
-        (name (benchmark-init/node-name node))
-        (type (symbol-name (benchmark-init/node-type node)))
-        (duration (round (benchmark-init/node-duration node)))
-        (children (benchmark-init/node-children node)))
-    (insert (format "%s[%s %s %dms]\n" padding name type duration))
-    (dolist (child children nil)
-      (benchmark-init/print-node child depth))))
+(defun benchmark-init/node-root-p (node)
+  "True if NODE represents the tree root."
+  (eq benchmark-init/durations-tree node))
+
+(defun benchmark-init/node-duration-adjusted (node)
+  "Duration of NODE with child durations removed."
+  (let ((duration (benchmark-init/node-duration node))
+        (child-durations (benchmark-init/sum-node-durations
+                          (benchmark-init/node-children node))))
+    (if (benchmark-init/node-root-p node) 0
+      (- duration child-durations))))
+
+(defun benchmark-init/sum-node-durations (nodes)
+  "Return the sum of NODES durations."
+  (if nodes
+      (let ((rest (cdr nodes))
+            (duration (benchmark-init/node-duration (car nodes))))
+        (if rest
+            (+ duration (benchmark-init/sum-node-durations rest))
+          duration))
+    0))
+
+;; Benchmark helpers
 
 (defun benchmark-init/begin-measure (name type)
   "Begin measuring NAME of TYPE."
@@ -180,6 +153,8 @@ Slots:
          ,inner
        (benchmark-init/end-measure parent ,should-record-p))))
 
+;; Benchmark injection
+
 (defadvice require
   (around build-require-durations (feature &optional filename noerror) activate)
   "Record the time taken to require FEATURE."
@@ -196,6 +171,8 @@ Slots:
   (let ((name (abbreviate-file-name file))
         (should-record-p (lambda () t)))
     (benchmark-init/measure-around name 'load ad-do-it should-record-p)))
+
+;; Benchmark control
 
 (defun benchmark-init/deactivate ()
   "Deactivate benchmark-init."
@@ -214,9 +191,6 @@ Slots:
 
 (define-obsolete-function-alias 'benchmark-init/install
   'benchmark-init/activate)
-
-(define-obsolete-function-alias 'benchmark-init/show-durations
-  'benchmark-init/show-durations-tabulated)
 
 (provide 'benchmark-init)
 ;;; benchmark-init.el ends here

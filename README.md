@@ -21,14 +21,6 @@ immediately after benchmark-init is loaded.
 
 ### Using el-get
 
-Add the following recipe to el-get.
-
-```lisp
-(:name benchmark-init
-       :type github
-       :pkgname "dholm/benchmark-init-el")
-```
-
 Since benchmark-init must be activated as early as possible so that it can
 measure calls to load and require it should be loaded before *el-get* starts
 bringing in other packages.  To achieve that, add something like the following
@@ -48,12 +40,12 @@ and everything should be benchmarked from now on.
 
 ## Usage
 
-After Emacs has finished loading the following function will display the
-results:
+There are two ways in which benchmark-init's results can be presented, as a
+table or in a tree.  The table can be displayed by running:
 
  - benchmark-init/show-durations-tabulated
 
-This is what it might look like when executing *benchmark-init/show-durations*.
+Which will bring up the results in a tabulated list:
 
 ```
 | Module                       |  Type   | ms [^] |
@@ -64,6 +56,24 @@ This is what it might look like when executing *benchmark-init/show-durations*.
 | ispell                       | require |     16 |
 | grep                         | require |      6 |
 | ~/.emacs.d/benchmark-init.el | load    |      1 |
+```
+
+The duration of each entry include the entry itself as well as any entries that
+have been loaded from it.  In the tree mode each entry will only display the
+time spent loading the entry itself, not including children.  Tree mode can be
+displayed by running:
+
+ - benchmark-init/show-durations-tree
+
+```
+╼►[benchmark-init/root nil 0ms]
+  ├─[benchmark-init-modes require 8ms]
+  ├─[eldoc-eval require 2ms]
+  │ ╰─[eldoc require 125ms]
+  ├─[~/.emacs.d/el-get/benchmark-init/benchmark-init.el load 4ms]
+  ╰─[auto-dictionary require 72ms]
+    ╰─[flyspell require 9ms]
+      ╰─[ispell require 24ms]
 ```
 
 It is possible to control when benchmark-init should collect data by using the
