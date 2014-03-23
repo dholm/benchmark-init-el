@@ -106,37 +106,39 @@ LOAD-DURATION is the time taken in milliseconds to load FEATURE.")
   "Calculate the number of milliseconds that have elapsed between B and A."
   (* 1000.0 (float-time (time-subtract b a))))
 
-(defun benchmark-init/collect-entry (start-time entry type)
-  "Store duration from START-TIME for ENTRY of TYPE into benchmark table."
-  (let ((duration (benchmark-init/time-subtract-millis (current-time)
-                                                       start-time)))
-    (puthash entry (list (symbol-name type) duration)
-             benchmark-init/durations)))
+(defun benchmark-init/add-entry (duration name type)
+  "Store DURATION for NAME of TYPE into benchmark table."
+  (puthash name (list (symbol-name type) duration)
+           benchmark-init/durations))
+
+(defmacro benchmark-init/measure-around (name type inner should-record-p)
+  "Save duration spent in NAME of TYPE around INNER if SHOULD-RECORD-P."
+  `(let ((entry (symbol-name ,type))
+         (start-time (current-time)))
+     (prog1
+         ,inner
+       (let ((duration (benchmark-init/time-subtract-millis
+                        (current-time) start-time)))
+         (when (funcall ,should-record-p)
+           (benchmark-init/add-entry duration ,name ,type))))))
 
 (defadvice require
   (around build-require-durations (feature &optional filename noerror) activate)
   "Note in `benchmark-init/durations' the time taken to require each feature."
-  (let ((entry (symbol-name feature))
+  (let ((name (symbol-name feature))
         (already-loaded (memq feature features))
-        (require-start-time (current-time)))
-    (prog1
-        ad-do-it
-      (when (and (not already-loaded)
-                 (memq feature features))
-        (benchmark-init/collect-entry require-start-time entry 'require)))))
+        (should-record-p (lambda ()
+                           (and (not already-loaded) (memq feature features)))))
+    (benchmark-init/measure-around name 'require ad-do-it should-record-p)))
 
 (defadvice load
   (around build-load-durations (file &optional noerror nomessage nosuffix
                                      must-suffix) activate)
   "Note in `benchmark-init/durations' the time taken to load each file."
-  (let ((entry (abbreviate-file-name file))
-        (load-start-time (current-time)))
-    (prog1
-        ad-do-it
-      (if (eq (gethash entry benchmark-init/durations) nil)
-          (benchmark-init/collect-entry load-start-time entry 'load)
-        (message
-         (format "Loaded %s which had already been loaded!" file))))))
+  (let* ((name (abbreviate-file-name file))
+         (should-record-p (lambda ()
+                            (eq (gethash name benchmark-init/durations) nil))))
+    (benchmark-init/measure-around name 'load ad-do-it should-record-p)))
 
 (defun benchmark-init/deactivate ()
   "Deactivate benchmark-init."
