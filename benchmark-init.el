@@ -53,6 +53,7 @@
 
 ;;; Code:
 
+(require 'cl-lib)
 (require 'tabulated-list)
 
 (defconst benchmark-init/buffer-name "*Benchmark Init*"
@@ -70,9 +71,25 @@
   '("ms" . t)
   "Benchmark list sort key.")
 
-(defvar benchmark-init/durations (make-hash-table :test 'equal)
-  "A hash table of (MODULE . (LOAD-TYPE LOAD-DURATION)).
-LOAD-DURATION is the time taken in milliseconds to load FEATURE.")
+(cl-defstruct benchmark-init/node
+  "Tree node structure.
+
+Slots:
+`name` Entry name.
+`type` Entry type, such as 'require or 'load.
+`duration` Duration in milliseconds.
+`children` Nodes loaded by this one."
+  name type duration children)
+
+(defvar benchmark-init/durations-tree (make-benchmark-init/node
+                                       :name 'benchmark-init/root
+                                       :type nil
+                                       :duration -1
+                                       :children nil)
+  "Recorded durations stored in a tree.")
+
+(defvar benchmark-init/current-node benchmark-init/durations-tree
+  "Current node in durations tree.")
 
 (define-derived-mode benchmark-init/list-mode tabulated-list-mode
   "Benchmark Init"
@@ -94,37 +111,73 @@ LOAD-DURATION is the time taken in milliseconds to load FEATURE.")
 (defun benchmark-init/list-entries ()
   "Generate benchmark-init list entries from HASH-TABLE."
   (let (entries)
-    (maphash
-     (lambda (key value)
-       (let ((type (car value))
-             (duration (round (cadr value))))
-         (push (list key `[,key ,type ,(format "%d" duration)]) entries)))
-     benchmark-init/durations)
+    (mapc
+     (lambda (value)
+       (let ((name (cdr (assq :name value)))
+             (type (symbol-name (cdr (assq :type value))))
+             (duration (round (cdr (assq :duration value)))))
+         (push (list name `[,name ,type ,(format "%d" duration)]) entries)))
+     (cdr (benchmark-init/flatten benchmark-init/durations-tree)))
     entries))
 
 (defun benchmark-init/time-subtract-millis (b a)
   "Calculate the number of milliseconds that have elapsed between B and A."
   (* 1000.0 (float-time (time-subtract b a))))
 
-(defun benchmark-init/add-entry (duration name type)
-  "Store DURATION for NAME of TYPE into benchmark table."
-  (puthash name (list (symbol-name type) duration)
-           benchmark-init/durations))
+(defun benchmark-init/flatten (node)
+  "Flatten NODE into an association list."
+  (let ((node-alist `((:name . ,(benchmark-init/node-name node))
+                      (:type . ,(benchmark-init/node-type node))
+                      (:duration . ,(benchmark-init/node-duration node))))
+        (children (benchmark-init/node-children node))
+        (node-list))
+    (cons node-alist
+          (dolist (child children node-list)
+            (setq node-list
+                  (append (benchmark-init/flatten child) node-list))))))
+
+(defun benchmark-init/print-node (node depth)
+  "Print NODE at DEPTH."
+  (let ((padding (make-string (* 2 depth) ? ))
+        (depth (+ depth 1))
+        (name (benchmark-init/node-name node))
+        (type (symbol-name (benchmark-init/node-type node)))
+        (duration (round (benchmark-init/node-duration node)))
+        (children (benchmark-init/node-children node)))
+    (insert (format "%s[%s %s %dms]\n" padding name type duration))
+    (dolist (child children nil)
+      (benchmark-init/print-node child depth))))
+
+(defun benchmark-init/begin-measure (name type)
+  "Begin measuring NAME of TYPE."
+  (let ((parent benchmark-init/current-node)
+        (node (make-benchmark-init/node :name name :type type
+                                        :duration (current-time)
+                                        :children nil)))
+    (setq benchmark-init/current-node node)
+    parent))
+
+(defun benchmark-init/end-measure (parent should-record-p)
+  "Stop measuring and store to PARENT if SHOULD-RECORD-P."
+  (let ((node benchmark-init/current-node)
+        (duration (benchmark-init/time-subtract-millis
+                   (current-time)
+                   (benchmark-init/node-duration benchmark-init/current-node))))
+    (when (funcall should-record-p)
+      (setf (benchmark-init/node-duration node) duration)
+      (push node (benchmark-init/node-children parent)))
+    (setq benchmark-init/current-node parent)))
 
 (defmacro benchmark-init/measure-around (name type inner should-record-p)
   "Save duration spent in NAME of TYPE around INNER if SHOULD-RECORD-P."
-  `(let ((entry (symbol-name ,type))
-         (start-time (current-time)))
+  `(let ((parent (benchmark-init/begin-measure ,name ,type)))
      (prog1
          ,inner
-       (let ((duration (benchmark-init/time-subtract-millis
-                        (current-time) start-time)))
-         (when (funcall ,should-record-p)
-           (benchmark-init/add-entry duration ,name ,type))))))
+       (benchmark-init/end-measure parent ,should-record-p))))
 
 (defadvice require
   (around build-require-durations (feature &optional filename noerror) activate)
-  "Note in `benchmark-init/durations' the time taken to require each feature."
+  "Record the time taken to require FEATURE."
   (let ((name (symbol-name feature))
         (already-loaded (memq feature features))
         (should-record-p (lambda ()
@@ -134,10 +187,9 @@ LOAD-DURATION is the time taken in milliseconds to load FEATURE.")
 (defadvice load
   (around build-load-durations (file &optional noerror nomessage nosuffix
                                      must-suffix) activate)
-  "Note in `benchmark-init/durations' the time taken to load each file."
-  (let* ((name (abbreviate-file-name file))
-         (should-record-p (lambda ()
-                            (eq (gethash name benchmark-init/durations) nil))))
+  "Record the time taken to load FILE."
+  (let ((name (abbreviate-file-name file))
+        (should-record-p (lambda () t)))
     (benchmark-init/measure-around name 'load ad-do-it should-record-p)))
 
 (defun benchmark-init/deactivate ()
