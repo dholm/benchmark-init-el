@@ -54,7 +54,6 @@
 ;;; Code:
 
 (require 'cl-lib)
-(require 'tabulated-list)
 
 (defconst benchmark-init/buffer-name "*Benchmark Init*"
   "Name of benchmark-init list buffer.")
@@ -91,22 +90,15 @@ Slots:
 (defvar benchmark-init/current-node benchmark-init/durations-tree
   "Current node in durations tree.")
 
-(define-derived-mode benchmark-init/list-mode tabulated-list-mode
-  "Benchmark Init"
-  "Mode for displaying benchmark-init results."
+;; Tabulated presentation mode
+
+(define-derived-mode benchmark-init/tabulated-mode tabulated-list-mode
+  "Benchmark Init Tabulated"
+  "Mode for displaying benchmark-init results in a table."
   (setq tabulated-list-format benchmark-init/list-format)
   (setq tabulated-list-padding 2)
   (setq tabulated-list-sort-key benchmark-init/list-sort-key)
   (tabulated-list-init-header))
-
-(defun benchmark-init/show-durations ()
-  "Show the benchmark for the specified HASH-TABLE with primary column NAME."
-  (interactive)
-  (with-current-buffer (get-buffer-create benchmark-init/buffer-name)
-    (benchmark-init/list-mode)
-    (setq tabulated-list-entries 'benchmark-init/list-entries)
-    (tabulated-list-print t)
-    (switch-to-buffer (current-buffer))))
 
 (defun benchmark-init/list-entries ()
   "Generate benchmark-init list entries from HASH-TABLE."
@@ -119,6 +111,19 @@ Slots:
          (push (list name `[,name ,type ,(format "%d" duration)]) entries)))
      (cdr (benchmark-init/flatten benchmark-init/durations-tree)))
     entries))
+
+(defun benchmark-init/show-durations-tabulated ()
+  "Show the benchmark results in a sorted table."
+  (interactive)
+  (unless (featurep 'tabulated-list)
+    (require 'tabulated-list))
+  (with-current-buffer (get-buffer-create benchmark-init/buffer-name)
+    (benchmark-init/tabulated-mode)
+    (setq tabulated-list-entries 'benchmark-init/list-entries)
+    (tabulated-list-print t)
+    (switch-to-buffer (current-buffer))))
+
+;; Helpers
 
 (defun benchmark-init/time-subtract-millis (b a)
   "Calculate the number of milliseconds that have elapsed between B and A."
@@ -205,8 +210,13 @@ Slots:
   (ad-activate 'require)
   (ad-activate 'load))
 
+;; Obsolete functions
+
 (define-obsolete-function-alias 'benchmark-init/install
   'benchmark-init/activate)
+
+(define-obsolete-function-alias 'benchmark-init/show-durations
+  'benchmark-init/show-durations-tabulated)
 
 (provide 'benchmark-init)
 ;;; benchmark-init.el ends here

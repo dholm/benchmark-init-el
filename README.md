@@ -51,7 +51,7 @@ and everything should be benchmarked from now on.
 After Emacs has finished loading the following function will display the
 results:
 
- - benchmark-init/show-durations
+ - benchmark-init/show-durations-tabulated
 
 This is what it might look like when executing *benchmark-init/show-durations*.
 
