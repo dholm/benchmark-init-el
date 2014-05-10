@@ -104,7 +104,9 @@ Slots:
   "Flatten NODE into an association list."
   (let ((node-alist `((:name . ,(benchmark-init/node-name node))
                       (:type . ,(benchmark-init/node-type node))
-                      (:duration . ,(benchmark-init/node-duration node))))
+                      (:duration . ,(benchmark-init/node-duration node))
+                      (:duration-adj . ,(benchmark-init/node-duration-adjusted
+                                         node))))
         (children (benchmark-init/node-children node))
         (node-list))
     (cons node-alist

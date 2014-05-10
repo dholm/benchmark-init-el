@@ -48,20 +48,22 @@ table or in a tree.  The table can be displayed by running:
 Which will bring up the results in a tabulated list:
 
 ```
-| Module                       |  Type   | ms [^] |
-+------------------------------+---------+--------+
-| eldoc-eval                   | require |    204 |
-| eldoc                        | require |    183 |
-| ido                          | require |     59 |
-| ispell                       | require |     16 |
-| grep                         | require |      6 |
-| ~/.emacs.d/benchmark-init.el | load    |      1 |
+| Module                       |  Type   | ms [^] | total ms |
++------------------------------+---------+--------+----------+
+| eldoc-eval                   | require |    204 |      204 |
+| eldoc                        | require |    183 |      183 |
+| semantic/db-find             | require |     19 |       92 |
+| ispell                       | require |     16 |       16 |
+| grep                         | require |      6 |        6 |
+| ~/.emacs.d/benchmark-init.el | load    |      1 |        1 |
 ```
 
-The duration of each entry include the entry itself as well as any entries that
-have been loaded from it.  In the tree mode each entry will only display the
-time spent loading the entry itself, not including children.  Tree mode can be
-displayed by running:
+The *ms* column lists the amount of time spent loading the entry itself and
+*total ms* is the duration spent loading the entry and its dependencies.  In
+the tree mode each entry will only display the time spent loading the entry
+itself, not including children.
+
+Tree mode can be displayed by running:
 
  - benchmark-init/show-durations-tree
 

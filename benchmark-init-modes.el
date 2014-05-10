@@ -78,6 +78,9 @@
    ("Type" 7 t)
    ("ms" 7 (lambda (a b) (< (string-to-number (aref (cadr a) 2))
                             (string-to-number (aref (cadr b) 2))))
+    :right-align t)
+   ("total ms" 7 (lambda (a b) (< (string-to-number (aref (cadr a) 2))
+                                  (string-to-number (aref (cadr b) 2))))
     :right-align t)]
   "Benchmark list format.")
 
@@ -109,14 +112,16 @@
   (tabulated-list-init-header))
 
 (defun benchmark-init/list-entries ()
-  "Generate benchmark-init list entries from HASH-TABLE."
+  "Generate benchmark-init list entries from durations tree."
   (let (entries)
     (mapc
      (lambda (value)
        (let ((name (cdr (assq :name value)))
              (type (symbol-name (cdr (assq :type value))))
-             (duration (round (cdr (assq :duration value)))))
-         (push (list name `[,name ,type ,(format "%d" duration)]) entries)))
+             (duration (round (cdr (assq :duration value))))
+             (duration-adj (round (cdr (assq :duration-adj value)))))
+         (push (list name `[,name ,type ,(number-to-string duration-adj)
+                                  ,(number-to-string duration)]) entries)))
      (cdr (benchmark-init/flatten benchmark-init/durations-tree)))
     entries))
 
