@@ -68,16 +68,16 @@
   "Tree node structure.
 
 Slots:
-`name` Entry name.
-`type` Entry type, such as 'require or 'load.
-`duration` Duration in milliseconds.
-`children` Nodes loaded by this one."
+`name' Entry name.
+`type' Entry type, such as 'require or 'load.
+`duration' Duration in milliseconds.
+`children' Nodes loaded by this one."
   name type duration children)
 
 (defvar benchmark-init/durations-tree (make-benchmark-init/node
                                        :name 'benchmark-init/root
                                        :type nil
-                                       :duration -1
+                                       :duration 0
                                        :children nil)
   "Recorded durations stored in a tree.")
 
@@ -89,6 +89,16 @@ Slots:
 (defun benchmark-init/time-subtract-millis (b a)
   "Calculate the number of milliseconds that have elapsed between B and A."
   (* 1000.0 (float-time (time-subtract b a))))
+
+(defun benchmark-init/node-foldr (f base node)
+  "Apply binary function F to BASE and NODE."
+  (cond ((null node) base)
+        ((benchmark-init/node-p node)
+         (let ((children (benchmark-init/node-children node)))
+           (funcall f node (benchmark-init/node-foldr f base children))))
+        (t (let ((x (car node))
+                 (xs (cdr node)))
+             (funcall f x (benchmark-init/node-foldr f base xs))))))
 
 (defun benchmark-init/flatten (node)
   "Flatten NODE into an association list."
@@ -111,18 +121,14 @@ Slots:
   (let ((duration (benchmark-init/node-duration node))
         (child-durations (benchmark-init/sum-node-durations
                           (benchmark-init/node-children node))))
-    (if (benchmark-init/node-root-p node) 0
+    (if (benchmark-init/node-root-p node) child-durations
       (- duration child-durations))))
 
 (defun benchmark-init/sum-node-durations (nodes)
   "Return the sum of NODES durations."
-  (if nodes
-      (let ((rest (cdr nodes))
-            (duration (benchmark-init/node-duration (car nodes))))
-        (if rest
-            (+ duration (benchmark-init/sum-node-durations rest))
-          duration))
-    0))
+  (benchmark-init/node-foldr (lambda (x base)
+                               (+ (benchmark-init/node-duration x) base))
+                             0 nodes))
 
 ;; Benchmark helpers
 
