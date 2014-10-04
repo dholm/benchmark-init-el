@@ -166,10 +166,10 @@ Slots:
 (defadvice require
   (around build-require-durations (feature &optional filename noerror) activate)
   "Record the time taken to require FEATURE."
-  (let ((name (symbol-name feature))
-        (already-loaded (memq feature features))
-        (should-record-p (lambda ()
-                           (and (not already-loaded) (memq feature features)))))
+  (let* ((name (symbol-name feature))
+         (already-loaded (memq feature features))
+         (should-record-p (lambda ()
+                            (and (not already-loaded) (memq feature features)))))
     (benchmark-init/measure-around name 'require ad-do-it should-record-p)))
 
 (defadvice load
