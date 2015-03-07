@@ -10,22 +10,33 @@ several modification has gone into it since.
 
 ## Installation
 
-Place this program in your load path and add the following code to the
-beginning of your Emacs initialization script.  Data collection will begin
-immediately after benchmark-init is loaded.
+Run `make` inside the directory where you installed *benchmark-init*, this will
+produce the `benchmark-init-loaddefs.el` file.  Then place the following code
+as early as possible in your Emacs initialization script.  Replace
+`/path/to/benchmark-init` with the path to the directory where you put
+*benchmark-init*.
 
 ```lisp
-(require 'benchmark-init)
+(add-to-list 'load-path "/path/to/benchmark-init/")
+(require 'benchmark-init-loaddefs)
+(benchmark-init/activate)
 ```
+
+Data collection will begin immediately after the call to
+`benchmark-init/activate`.
 
 
 ### Using el-get
+
+If you are not using *el-get* to manage your Emacs packages you can skip this
+section.
 
 Since benchmark-init must be activated as early as possible so that it can
 measure calls to load and require it should be loaded before *el-get* starts
 bringing in other packages.  To achieve that, add something like the following
 snippet as early as possible in your Emacs initialization script, before
-calling *el-get*.
+calling *el-get*.  Replace `/path/to/el-get` with the path to your *el-get*
+directory.
 
 ```lisp
 (let ((benchmark-init.el "/path/to/el-get/benchmark-init/benchmark-init.el"))
