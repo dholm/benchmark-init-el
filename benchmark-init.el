@@ -90,18 +90,8 @@ Slots:
   "Calculate the number of milliseconds that have elapsed between B and A."
   (* 1000.0 (float-time (time-subtract b a))))
 
-(defun benchmark-init/node-foldr (f base node)
-  "Apply binary function F to BASE and NODE."
-  (cond ((null node) base)
-        ((benchmark-init/node-p node)
-         (let ((children (benchmark-init/node-children node)))
-           (funcall f node (benchmark-init/node-foldr f base children))))
-        (t (let ((x (car node))
-                 (xs (cdr node)))
-             (funcall f x (benchmark-init/node-foldr f base xs))))))
-
 (defun benchmark-init/flatten (node)
-  "Flatten NODE into an association list."
+  "Flatten NODE into a property list."
   (let ((node-alist `((:name . ,(benchmark-init/node-name node))
                       (:type . ,(benchmark-init/node-type node))
                       (:duration . ,(benchmark-init/node-duration node))
@@ -128,9 +118,10 @@ Slots:
 
 (defun benchmark-init/sum-node-durations (nodes)
   "Return the sum of NODES durations."
-  (benchmark-init/node-foldr (lambda (x base)
-                               (+ (benchmark-init/node-duration x) base))
-                             0 nodes))
+  (let ((accum 0)
+        (f (lambda (x base) (+ (benchmark-init/node-duration x) base))))
+    (dolist (node nodes accum)
+      (setq accum (+ (benchmark-init/node-duration node) accum)))))
 
 ;; Benchmark helpers
 
