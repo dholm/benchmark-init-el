@@ -58,9 +58,8 @@ calling *el-get*.  Replace `/path/to/el-get` with the path to your *el-get*
 directory.
 
 ```lisp
-(let ((benchmark-init.el "/path/to/el-get/benchmark-init/benchmark-init.el"))
-  (when (file-exists-p benchmark-init.el)
-    (load benchmark-init.el)))
+(load "/path/to/el-get/benchmark-init/benchmark-init.el"
+      'no-error nil 'no-suffix)
 ```
 
 The first time you start Emacs after adding this nothing will be benchmarked
