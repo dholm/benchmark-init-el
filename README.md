@@ -4,27 +4,46 @@ This is a simple benchmark of calls to Emacs require and load functions.
 It can be used to keep track of where time is being spent during Emacs
 startup in order to optimize startup times.
 
-The code was originally based on [init-benchmarking.el][1] by Steve Purcell but
-several modification has gone into it since.
-
+The code was originally based on [init-benchmarking.el][1] by Steve Purcell
+with many additional modifications having gone into it since.
 
 ## Installation
 
-Run `make` inside the directory where you installed *benchmark-init*, this will
-produce the `benchmark-init-loaddefs.el` file.  Then place the following code
-as early as possible in your Emacs initialization script.  Replace
-`/path/to/benchmark-init` with the path to the directory where you put
-*benchmark-init*.
+### Manually installing using `package.el`
+
+Ensure that you have added MELPA to your package archives.  For instance by
+having the following in your Emacs configuration.
 
 ```lisp
-(add-to-list 'load-path "/path/to/benchmark-init/")
-(require 'benchmark-init-loaddefs)
-(benchmark-init/activate)
+(require 'package)
+(add-to-list 'package-archives
+             '("melpa" . "http://melpa.org/packages/") t)
 ```
 
-Data collection will begin immediately after the call to
-`benchmark-init/activate`.
+Then update the local package list using `M-x package-refresh-contents RET`.
+After this your can install `benchmark-init` by running `M-x package-install
+RET benchmark-init RET`.  After installation completes you need to add the
+following near the beginning of your configuration file but after setting up
+`package`.
 
+```lisp
+(require 'benchmark-init)
+;; To disable collection of benchmark data after init is done.
+(add-hook 'after-init-hook 'benchmark-init/deactivate)
+```
+
+### Using `use-package`
+
+Add the following as early as possible to your Emacs configuration, but after
+setting up `use-package`.
+
+```lisp
+(use-package benchmark-init
+  :ensure t
+  :config
+  ;; To disable collection of benchmark data after init is done.
+  (add-hook 'after-init-hook 'benchmark-init/deactivate))
+```
 
 ### Using el-get
 
@@ -48,17 +67,33 @@ The first time you start Emacs after adding this nothing will be benchmarked
 since *el-get* will only install the package.  Simply quit and restart Emacs
 and everything should be benchmarked from now on.
 
+### Manual installation
+
+Run `make` inside the directory where you installed *benchmark-init*, this will
+produce the `benchmark-init-loaddefs.el` file.  Then place the following code
+as early as possible in your Emacs initialization script.  Replace
+`/path/to/benchmark-init` with the path to the directory where you put
+*benchmark-init*.
+
+```lisp
+(add-to-list 'load-path "/path/to/benchmark-init/")
+(require 'benchmark-init-loaddefs)
+(benchmark-init/activate)
+```
+
+Data collection will begin immediately after the call to
+`benchmark-init/activate`.
 
 ## Usage
 
 There are two ways in which benchmark-init's results can be presented, as a
 table or in a tree.  The table can be displayed by running:
 
- - benchmark-init/show-durations-tabulated
+- benchmark-init/show-durations-tabulated
 
 Which will bring up the results in a tabulated list:
 
-```
+```text
 | Module                       |  Type   | ms [^] | total ms |
 +------------------------------+---------+--------+----------+
 | eldoc-eval                   | require |    204 |      204 |
@@ -76,9 +111,9 @@ itself, not including children.
 
 Tree mode can be displayed by running:
 
- - benchmark-init/show-durations-tree
+- benchmark-init/show-durations-tree
 
-```
+```text
 ╼►[benchmark-init/root nil 0ms]
   ├─[benchmark-init-modes require 8ms]
   ├─[eldoc-eval require 2ms]
@@ -92,7 +127,7 @@ Tree mode can be displayed by running:
 It is possible to control when benchmark-init should collect data by using the
 following two functions:
 
- - benchmark-init/activate
- - benchmark-init/deactivate
+- benchmark-init/activate
+- benchmark-init/deactivate
 
 [1]: https://github.com/purcell/emacs.d/blob/master/lisp/init-benchmarking.el
