@@ -1,4 +1,4 @@
-;;; benchmark-init.el --- Benchmarks Emacs require and load calls
+;;; benchmark-init.el --- Benchmarks for require and load calls
 
 ;; Copyright (C) 2013 Steve Purcell
 ;; Copyright (C) 2013-2014 David Holm
@@ -6,7 +6,10 @@
 ;; Author: Steve Purcell
 ;; Maintainer: David Holm <dholmster@gmail.com>
 ;; Created: 25 Apr 2013
-;; Keywords: benchmark
+;; Keywords: convenience benchmark
+;; Version: 1.0.0
+;; URL: https://github.com/dholm/benchmark-init-el
+;; Package-Requires: ((emacs "24.3"))
 
 ;; This file is not part of GNU Emacs.
 

@@ -4,7 +4,6 @@
 
 ;; Author: David Holm <dholmster@gmail.com>
 ;; Created: 05 Apr 2014
-;; Keywords: benchmark
 
 ;; This file is not part of GNU Emacs.
 
