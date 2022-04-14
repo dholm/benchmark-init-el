@@ -79,8 +79,8 @@
    ("ms" 7 (lambda (a b) (< (string-to-number (aref (cadr a) 2))
                             (string-to-number (aref (cadr b) 2))))
     :right-align t)
-   ("total ms" 7 (lambda (a b) (< (string-to-number (aref (cadr a) 2))
-                                  (string-to-number (aref (cadr b) 2))))
+   ("total ms" 7 (lambda (a b) (< (string-to-number (aref (cadr a) 3))
+                                  (string-to-number (aref (cadr b) 3))))
     :right-align t)]
   "Benchmark list format.")
 
