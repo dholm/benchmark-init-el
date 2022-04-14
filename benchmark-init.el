@@ -189,7 +189,7 @@ Slots:
 ;; Obsolete functions
 
 (define-obsolete-function-alias 'benchmark-init/install
-  'benchmark-init/activate)
+  'benchmark-init/activate "2014-03-17")
 
 (provide 'benchmark-init)
 ;;; benchmark-init.el ends here
