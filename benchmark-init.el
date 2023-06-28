@@ -1,4 +1,4 @@
-;;; benchmark-init.el --- Benchmarks for require and load calls
+;;; benchmark-init.el --- Benchmarks for require and load calls -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2013 Steve Purcell
 ;; Copyright (C) 2013-2014 David Holm
