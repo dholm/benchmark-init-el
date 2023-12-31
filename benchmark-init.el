@@ -121,8 +121,7 @@ Slots:
 
 (defun benchmark-init/sum-node-durations (nodes)
   "Return the sum of NODES durations."
-  (let ((accum 0)
-        (f (lambda (x base) (+ (benchmark-init/node-duration x) base))))
+  (let ((accum 0))
     (dolist (node nodes accum)
       (setq accum (+ (benchmark-init/node-duration node) accum)))))
 
