@@ -1,4 +1,4 @@
-;;; benchmark-init-modes.el --- Modes for presenting benchmark results.
+;;; benchmark-init-modes.el --- Modes for presenting benchmark results. -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2014 David Holm
 
