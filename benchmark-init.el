@@ -7,7 +7,7 @@
 ;; Maintainer: David Holm <dholmster@gmail.com>
 ;; Created: 25 Apr 2013
 ;; Keywords: convenience benchmark
-;; Version: 1.0.0
+;; Version: 1.1
 ;; URL: https://github.com/dholm/benchmark-init-el
 ;; Package-Requires: ((emacs "24.3"))
 
