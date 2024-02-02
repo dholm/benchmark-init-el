@@ -37,8 +37,7 @@
 
 ;;; Code:
 
-(eval-when-compile
-  (require 'benchmark-init))
+(require 'benchmark-init)
 
 ;; Faces
 
