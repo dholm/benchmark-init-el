@@ -38,6 +38,7 @@
 ;;; Code:
 
 (require 'benchmark-init)
+(require 'cl-lib)
 
 ;; Faces
 
@@ -160,18 +161,18 @@
 
 (defun benchmark-init/print-nodes (nodes padding)
   "Print NODES after PADDING."
-  (let ((x (car nodes))
-        (xs (cdr nodes)))
-    (let ((children (benchmark-init/node-children x))
-          (cur-padding (concat padding (if xs "├─" "╰─")))
-          (sub-padding (concat padding (if xs "│ " "  "))))
-      (if (benchmark-init/node-root-p x)
-          (benchmark-init/print-node "╼►" x)
-        (benchmark-init/print-node cur-padding x))
-      (when children
-        (benchmark-init/print-nodes children sub-padding))
-      (when xs
-        (benchmark-init/print-nodes xs padding)))))
+  (cl-mapl (lambda (cons)
+             (let ((x (car cons))
+                   (xs (cdr cons)))
+               (let ((children (benchmark-init/node-children x))
+                     (cur-padding (concat padding (if xs "├─" "╰─")))
+                     (sub-padding (concat padding (if xs "│ " "  "))))
+                 (if (benchmark-init/node-root-p x)
+                     (benchmark-init/print-node "╼►" x)
+                   (benchmark-init/print-node cur-padding x))
+                 (when children
+                   (benchmark-init/print-nodes children sub-padding)))))
+           (reverse nodes)))
 
 (defun benchmark-init/tree-buffer-setup ()
   "Configure the buffer for the durations tree."
