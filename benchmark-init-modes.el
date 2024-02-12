@@ -191,6 +191,7 @@
   (setq truncate-lines t)
   (use-local-map benchmark-init/tree-mode-map)
   (setq major-mode 'benchmark-init/tree-mode)
+  (setq mode-name "Benchmark Init Tree")
   (benchmark-init/tree-buffer-setup)
   (run-mode-hooks 'benchmark-init/tree-mode-hook))
 
