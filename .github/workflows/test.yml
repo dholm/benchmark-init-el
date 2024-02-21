@@ -1,0 +1,34 @@
+name: test
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+  schedule:
+    - cron: '0 0 * * *'
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        emacs_version: [24.3, 24.4, 24.5, 25.1, 25.2, 25.3, 26.1, 26.2, 26.3,
+                        27.1, 27.2, 28.1, 28.2, 29.1]
+        # Due to this package not following proper namespace conventions (using
+        # "/" instead of "--" for namespace separator), package-lint spits out a
+        # bunch of errors.  So check everything else from the melpa check.
+        check: [load-file, byte-compile, checkdoc]
+    steps:
+      - uses: purcell/setup-emacs@v6.0
+        with:
+          version: ${{ matrix.emacs_version }}
+      - uses: actions/checkout@v4
+      - uses: leotaku/elisp-check@master
+        with:
+          check: ${{ matrix.check }}
+          file: '*.el'
+          # Emacs 24.3 and earlier has byte compiler warnings saying `node' and
+          # `child' are unused lexically, though they clearly are used.
+          warnings_as_errors: ${{ matrix.emacs_version > 24.3 }}
