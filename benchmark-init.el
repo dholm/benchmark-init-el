@@ -7,7 +7,7 @@
 ;; Maintainer: David Holm <dholmster@gmail.com>
 ;; Created: 25 Apr 2013
 ;; Keywords: convenience benchmark
-;; Version: 1.0.0
+;; Version: 1.1
 ;; URL: https://github.com/dholm/benchmark-init-el
 ;; Package-Requires: ((emacs "24.3"))
 
@@ -121,8 +121,7 @@ Slots:
 
 (defun benchmark-init/sum-node-durations (nodes)
   "Return the sum of NODES durations."
-  (let ((accum 0)
-        (f (lambda (x base) (+ (benchmark-init/node-duration x) base))))
+  (let ((accum 0))
     (dolist (node nodes accum)
       (setq accum (+ (benchmark-init/node-duration node) accum)))))
 

@@ -1,4 +1,4 @@
-;;; benchmark-init-modes.el --- Modes for presenting benchmark results.
+;;; benchmark-init-modes.el --- Modes for presenting benchmark results. -*- lexical-binding: t; package-lint-main-file: "benchmark-init.el"; -*-
 
 ;; Copyright (C) 2014 David Holm
 
