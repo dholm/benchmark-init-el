@@ -78,8 +78,11 @@
    ("ms" 7 (lambda (a b) (< (string-to-number (aref (cadr a) 2))
                             (string-to-number (aref (cadr b) 2))))
     :right-align t)
-   ("total ms" 7 (lambda (a b) (< (string-to-number (aref (cadr a) 3))
-                                  (string-to-number (aref (cadr b) 3))))
+   ("gc ms" 7 (lambda (a b) (< (string-to-number (aref (cadr a) 3))
+                               (string-to-number (aref (cadr b) 3))))
+    :right-align t)
+   ("total ms" 7 (lambda (a b) (< (string-to-number (aref (cadr a) 4))
+                                  (string-to-number (aref (cadr b) 4))))
     :right-align t)]
   "Benchmark list format.")
 
@@ -121,9 +124,12 @@
        (let ((name (cdr (assq :name value)))
              (type (symbol-name (cdr (assq :type value))))
              (duration (round (cdr (assq :duration value))))
-             (duration-adj (round (cdr (assq :duration-adj value)))))
+             (duration-adj (round (cdr (assq :duration-adj value))))
+             (gc-duration-adj (round (cdr (assq :gc-duration-adj value)))))
          (push (list name `[,name ,type ,(number-to-string duration-adj)
-                                  ,(number-to-string duration)]) entries)))
+                                  ,(number-to-string gc-duration-adj)
+                                  ,(number-to-string duration)])
+               entries)))
      (cdr (benchmark-init/flatten benchmark-init/display-root)))
     entries))
 
@@ -156,13 +162,16 @@ defaults to `benchmark-init/durations-tree'."
   "Print PADDING followed by NODE."
   (let ((name (benchmark-init/node-name node))
         (type (symbol-name (benchmark-init/node-type node)))
-        (duration (benchmark-init/node-duration-adjusted node)))
+        (duration (benchmark-init/node-duration-adjusted node))
+        (gc-duration (benchmark-init/node-gc-duration-adjusted node)))
     (insert padding "["
             (propertize (format "%s" name)
                         'face 'benchmark-init/name-face)
             " " (propertize (format "%s" type)
                             'face 'benchmark-init/type-face)
-            " " (propertize (format "%dms" (round duration))
+            " " (propertize (format "%dms gc:%dms"
+                                    (round duration)
+                                    (round gc-duration))
                             'face 'benchmark-init/duration-face)
             "]\n")))
 
